@@ -1,0 +1,23 @@
+[
+  {
+    "model": "user.Role",
+    "pk": 1,
+    "fields": {
+      "role_name": "global_admin"
+    }
+  },
+  {
+    "model": "user.Role",
+    "pk": 2,
+    "fields": {
+      "role_name": "shop_admin"
+    }
+  },
+  {
+    "model": "user.Role",
+    "pk": 3,
+    "fields": {
+      "role_name": "customer"
+    }
+  }
+]
