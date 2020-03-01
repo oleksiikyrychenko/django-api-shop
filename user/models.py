@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 
 
 class Profile(AbstractUser):
-    role = models.CharField(max_length=100)
+    role_id = models.IntegerField()
     email = models.CharField(max_length=100, unique=True)
 
     USERNAME_FIELD = 'email'

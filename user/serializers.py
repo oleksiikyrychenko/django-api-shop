@@ -5,7 +5,7 @@ from .models import Profile, Role
 class UserSerializers(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('id', 'username', 'first_name', 'last_name', 'email', 'role')
+        fields = ('id', 'username', 'first_name', 'last_name', 'email', 'role_id')
 
     def create(self, validated_data):
         return Profile.objects.create(**validated_data)
