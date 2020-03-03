@@ -48,8 +48,8 @@ class UserView(APIView):
     @permission_classes([IsAuthenticated, ])
     def delete(self, request):
         pk = request.query_params.get('pk')
-        article = get_object_or_404(Profile.objects.all(), pk=pk)
-        article.delete()
+        user = get_object_or_404(Profile.objects.all(), pk=pk)
+        user.delete()
         return Response({"message": "User has been deleted."})
 
 
