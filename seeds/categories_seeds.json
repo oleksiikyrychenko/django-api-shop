@@ -1,0 +1,62 @@
+[
+  {
+    "model": "shops.Category",
+    "pk": 1,
+    "fields": {
+      "left_key": 1,
+      "right_key": 12,
+      "title": "Electronic",
+      "depth": 0
+    }
+  },
+  {
+    "model": "shops.Category",
+    "pk": 2,
+    "fields": {
+      "left_key": 2,
+      "right_key": 3,
+      "title": "Phone",
+      "depth": 1
+    }
+  },
+  {
+    "model": "shops.Category",
+    "pk": 3,
+    "fields": {
+      "left_key": 4,
+      "right_key": 5,
+      "title": "TV",
+      "depth": 1
+    }
+  },
+  {
+    "model": "shops.Category",
+    "pk": 4,
+    "fields": {
+      "left_key": 6,
+      "right_key": 11,
+      "title": "Laptop",
+      "depth": 1
+    }
+  },
+  {
+    "model": "shops.Category",
+    "pk": 5,
+    "fields": {
+      "left_key": 7,
+      "right_key": 8,
+      "title": "Asus",
+      "depth": 2
+    }
+  },
+  {
+    "model": "shops.Category",
+    "pk": 6,
+    "fields": {
+      "left_key": 9,
+      "right_key": 10,
+      "title": "Acer",
+      "depth": 2
+    }
+  }
+]

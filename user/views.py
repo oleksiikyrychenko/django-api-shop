@@ -10,8 +10,8 @@ from rest_framework.views import APIView
 from rest_framework_jwt.serializers import jwt_payload_handler
 
 from shop_api import settings
-from .models import Role, Profile
-from .serializers import UserSerializers, RoleSerializers
+from user.models import Role, Profile
+from user.serializers import UserSerializers, RoleSerializers
 from django.contrib.auth import authenticate
 
 
