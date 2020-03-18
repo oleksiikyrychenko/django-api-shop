@@ -57,15 +57,19 @@ class LoginView(APIView):
     @permission_classes([AllowAny, ])
     def post(self, request):
         if 'email' in request.data and 'password' in request.data:
-            user = authenticate(username=request.data['email'], password=request.data['password'])
+            user = get_object_or_404(Profile.objects.all(), email=request.data['email'])
+            if user.confirmed_at is None:
+                return Response('Please activate your account', status=status.HTTP_400_BAD_REQUEST)
+
+            auth_user = authenticate(username=request.data['email'], password=request.data['password'])
             try:
-                payload = jwt_payload_handler(user)
+                payload = jwt_payload_handler(auth_user)
                 token = jwt.encode(payload, settings.SECRET_KEY)
                 user_details = {
                     'token': token,
-                    'user': model_to_dict(user)
+                    'user': model_to_dict(auth_user)
                 }
-                user_logged_in.send(sender=user.__class__, request=request, user=user)
+                user_logged_in.send(sender=auth_user.__class__, request=request, user=auth_user)
                 return Response(user_details, status=status.HTTP_200_OK)
 
             except Exception as e:

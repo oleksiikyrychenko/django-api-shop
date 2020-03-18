@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractUser
 class Profile(AbstractUser):
     role_id = models.IntegerField()
     email = models.CharField(max_length=100, unique=True)
+    confirmed_at = models.DateField(null=True, default=None)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'role']
