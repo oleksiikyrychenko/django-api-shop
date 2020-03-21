@@ -3,8 +3,8 @@ from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from shops.models import Shop, Category
-from shops.serializers import ShopSerializers, CategorySerializers
+from shops.models import Shop, Category, Product
+from shops.serializers import ShopSerializers, CategorySerializers, ProductsSerializers
 from django.shortcuts import get_object_or_404
 
 
@@ -135,3 +135,37 @@ class CategoryView(APIView):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response({"data": serializer.data})
+
+
+class ProductsView(APIView):
+    @permission_classes([IsAuthenticated, ])
+    def get(self, request):
+        goods = Product.objects.all()
+        serializer = ProductsSerializers(goods, many=True)
+        return Response({"data": serializer.data})
+
+    @permission_classes([IsAuthenticated, ])
+    def post(self, request):
+        data = request.data.get('data')
+        serializer = ProductsSerializers(data=data)
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        return Response({"data": serializer.data})
+
+    @permission_classes([IsAuthenticated, ])
+    def put(self, request):
+        pk = request.query_params.get('pk')
+        product = get_object_or_404(Product.objects.all(), pk=pk)
+        data = request.data.get('data')
+        serializer = ProductsSerializers(instance=product, data=data, partial=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        return Response({"data": serializer.data})
+
+    @permission_classes([IsAuthenticated, ])
+    def delete(self, request):
+        pk = request.query_params.get('pk')
+        product = get_object_or_404(Product.objects.all(), pk=pk)
+        product.delete()
+        return Response({"message": "Product has been deleted."})

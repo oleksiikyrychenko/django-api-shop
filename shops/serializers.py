@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Shop, Category
+from .models import Shop, Category, Product
+from user.serializers import UserSerializers
 
 
 class ShopSerializers(serializers.ModelSerializer):
@@ -35,6 +36,28 @@ class CategorySerializers(serializers.ModelSerializer):
         instance.right_key = validated_data.get('right_key', instance.right_key)
         instance.title = validated_data.get('title', instance.title)
         instance.depth = validated_data.get('depth', instance.depth)
+
+        instance.save()
+        return instance
+
+
+class ProductsSerializers(serializers.ModelSerializer):
+    owner = UserSerializers(read_only=True)
+    owner_id = serializers.IntegerField(write_only=True)
+    category = CategorySerializers(read_only=True)
+    category_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = Product
+        fields = ('id', 'title', 'price', 'description', 'owner', 'owner_id', 'category', 'category_id')
+
+    def create(self, validated_data):
+        return Product.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        instance.title = validated_data.get('title', instance.title)
+        instance.price = validated_data.get('price', instance.price)
+        instance.description = validated_data.get('description', instance.description)
 
         instance.save()
         return instance
