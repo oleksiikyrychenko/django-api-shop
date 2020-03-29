@@ -48,3 +48,17 @@ class Product(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class ProductsImages(models.Model):
+    class Meta:
+        db_table = 'products_images'
+
+    objects = models.Manager()
+
+    product = models.ForeignKey('shops.Product', related_name='product_images', on_delete=models.CASCADE)
+    image = models.FileField(null=True, max_length=255)
+    created_at = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return '1'

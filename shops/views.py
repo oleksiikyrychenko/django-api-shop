@@ -3,8 +3,8 @@ from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from shops.models import Shop, Category, Product
-from shops.serializers import ShopSerializers, CategorySerializers, ProductsSerializers
+from shops.models import Shop, Category, Product, ProductsImages
+from shops.serializers import ShopSerializers, CategorySerializers, ProductsSerializers, ProductsImagesSerializers
 from django.shortcuts import get_object_or_404
 
 
@@ -140,18 +140,34 @@ class CategoryView(APIView):
 class ProductsView(APIView):
     @permission_classes([IsAuthenticated, ])
     def get(self, request):
-        goods = Product.objects.all()
-        serializer = ProductsSerializers(goods, many=True)
-        return Response({"data": serializer.data})
+        pk = request.query_params.get('pk')
+        if not pk:
+            serializer = ProductsSerializers(Product.objects.all(), many=True)
+            return Response({"data": serializer.data})
 
-    @permission_classes([IsAuthenticated, ])
+        product = get_object_or_404(Product.objects.all(), pk=pk)
+        return Response({"data": ProductsSerializers(product).data})
+
+    @permission_classes([AllowAny, ])
     def post(self, request):
-        data = request.data.get('data')
-        serializer = ProductsSerializers(data=data)
+        data = request.data
+        files = request.FILES.getlist('files')
+        if 'files' in data:
+            del data['files']
+        products_serializer = ProductsSerializers(data=data)
+        if products_serializer.is_valid(raise_exception=True):
+            products_serializer.save()
 
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-        return Response({"data": serializer.data})
+        for file in files:
+            data = {
+                'image': file,
+                'product': products_serializer.data['id']
+            }
+            serializer = ProductsImagesSerializers(data=data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+
+        return Response({"data": products_serializer.data})
 
     @permission_classes([IsAuthenticated, ])
     def put(self, request):
@@ -169,3 +185,11 @@ class ProductsView(APIView):
         product = get_object_or_404(Product.objects.all(), pk=pk)
         product.delete()
         return Response({"message": "Product has been deleted."})
+
+
+class ProductImagesView(APIView):
+    @permission_classes([AllowAny, ])
+    def get(self, request):
+        images = ProductsImages.objects.all()
+        serializer = ProductsImagesSerializers(images, many=True)
+        return Response({"data": serializer.data})
