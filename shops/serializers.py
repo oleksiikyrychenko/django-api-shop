@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Shop, Category, Product, ProductsImages
 from user.serializers import UserSerializers
+from drf_extra_fields.fields import Base64ImageField
 
 
 class ShopSerializers(serializers.ModelSerializer):
@@ -24,9 +25,11 @@ class ShopSerializers(serializers.ModelSerializer):
 
 
 class CategorySerializers(serializers.ModelSerializer):
+    has_children = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Category
-        fields = ('id', 'left_key', 'right_key', 'title', 'depth')
+        fields = ('id', 'left_key', 'right_key', 'title', 'depth', 'has_children')
 
     def create(self, validated_data):
         return Category.objects.create(**validated_data)
@@ -40,18 +43,26 @@ class CategorySerializers(serializers.ModelSerializer):
         instance.save()
         return instance
 
+    def get_has_children(self, obj):
+        categories = Category.objects.all()
+        children = categories.filter(left_key__gt=obj.left_key, right_key__lt=obj.right_key)
+        return children.count() > 0
+
 
 class ProductsImagesSerializers(serializers.ModelSerializer):
     size = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
     mime_type = serializers.SerializerMethodField()
+    image = Base64ImageField()
 
     class Meta:
         model = ProductsImages
         fields = "__all__"
 
     def create(self, validated_data):
-        return ProductsImages.objects.create(**validated_data)
+        image = validated_data.pop('image')
+        product = validated_data.pop('product')
+        return ProductsImages.objects.create(image=image, product=product)
 
     def get_size(self, obj):
         file_size = ''
@@ -79,7 +90,8 @@ class ProductsSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('id', 'title', 'price', 'description', 'owner', 'owner_id', 'category', 'category_id', 'product_images')
+        fields = (
+        'id', 'title', 'price', 'description', 'owner', 'owner_id', 'category', 'category_id', 'product_images')
 
     def create(self, validated_data):
         return Product.objects.create(**validated_data)

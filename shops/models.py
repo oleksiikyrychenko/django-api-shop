@@ -51,6 +51,7 @@ class Product(models.Model):
 
 
 class ProductsImages(models.Model):
+
     class Meta:
         db_table = 'products_images'
 

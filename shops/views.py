@@ -45,8 +45,16 @@ class ShopView(APIView):
 class CategoryView(APIView):
     @permission_classes([AllowAny, ])
     def get(self, request):
+        pk = request.query_params.get('pk')
         categories = Category.objects.all()
-        serializer = CategorySerializers(categories, many=True)
+        if pk:
+            category = get_object_or_404(Category.objects.all(), pk=pk)
+            children_categories = categories.filter(left_key__gt=category.left_key, right_key__lt=category.right_key)
+            serializer = CategorySerializers(children_categories, many=True)
+            return Response({"data": serializer.data})
+
+        root_categories = Category.objects.all().filter(depth=0)
+        serializer = CategorySerializers(root_categories, many=True)
         return Response({"data": serializer.data})
 
     @permission_classes([AllowAny, ])
@@ -151,7 +159,7 @@ class ProductsView(APIView):
     @permission_classes([AllowAny, ])
     def post(self, request):
         data = request.data
-        files = request.FILES.getlist('files')
+        files = request.data.get('files')
         if 'files' in data:
             del data['files']
         products_serializer = ProductsSerializers(data=data)
