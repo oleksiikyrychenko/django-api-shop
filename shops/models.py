@@ -62,4 +62,18 @@ class ProductsImages(models.Model):
     created_at = models.DateField(auto_now_add=True)
 
     def __str__(self):
+        return self.created_at
+
+
+class FavoritesProducts(models.Model):
+
+    class Meta:
+        db_table = 'favorites_products'
+
+    objects = models.Manager()
+
+    user = models.ForeignKey('user.Profile', related_name='user', on_delete=models.CASCADE)
+    product = models.ForeignKey('shops.Product', related_name='favorite_product', on_delete=models.CASCADE)
+
+    def __str__(self):
         return '1'

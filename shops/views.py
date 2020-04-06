@@ -3,8 +3,8 @@ from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from shops.models import Shop, Category, Product, ProductsImages
-from shops.serializers import ShopSerializers, CategorySerializers, ProductsSerializers, ProductsImagesSerializers
+from shops.models import Shop, Category, Product, ProductsImages, FavoritesProducts
+from shops.serializers import ShopSerializers, CategorySerializers, ProductsSerializers, ProductsImagesSerializers, FavoritesProductsSerializers
 from django.shortcuts import get_object_or_404
 
 
@@ -201,3 +201,33 @@ class ProductImagesView(APIView):
         images = ProductsImages.objects.all()
         serializer = ProductsImagesSerializers(images, many=True)
         return Response({"data": serializer.data})
+
+
+class FavoritesProductsView(APIView):
+    @permission_classes([AllowAny, ])
+    def get(self, request):
+        pk = request.query_params.get('user_id')
+        favorite_product = FavoritesProducts.objects.all().filter(user_id=pk)
+        serializer = FavoritesProductsSerializers(favorite_product, many=True)
+        return Response({"data": serializer.data})
+
+    @permission_classes([AllowAny, ])
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        product_id = request.data.get('product_id')
+        data = {
+            'user_id': user_id,
+            'product_id': product_id
+        }
+        serializer = FavoritesProductsSerializers(data=data)
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        return Response({"data": serializer.data})
+
+    @permission_classes([AllowAny, ])
+    def delete(self, request):
+        pk = request.query_params.get('pk')
+        favorite_product = get_object_or_404(FavoritesProducts.objects.all(), pk=pk)
+        favorite_product.delete()
+        return Response({"message": "Product was successful deleted from favorites"})

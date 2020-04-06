@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Shop, Category, Product, ProductsImages
+from .models import Shop, Category, Product, ProductsImages, FavoritesProducts
 from user.serializers import UserSerializers
 from drf_extra_fields.fields import Base64ImageField
 
@@ -103,3 +103,17 @@ class ProductsSerializers(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class FavoritesProductsSerializers(serializers.ModelSerializer):
+    user = UserSerializers(read_only=True)
+    user_id = serializers.IntegerField(write_only=True)
+    product = ProductsSerializers(read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = FavoritesProducts
+        fields = "__all__"
+
+    def create(self, validated_data):
+        return FavoritesProducts.objects.create(**validated_data)
