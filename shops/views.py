@@ -150,11 +150,11 @@ class ProductsView(APIView):
     def get(self, request):
         pk = request.query_params.get('pk')
         if not pk:
-            serializer = ProductsSerializers(Product.objects.all(), many=True)
+            serializer = ProductsSerializers(Product.objects.all(), many=True, context={'request': request})
             return Response({"data": serializer.data})
 
         product = get_object_or_404(Product.objects.all(), pk=pk)
-        return Response({"data": ProductsSerializers(product).data})
+        return Response({"data": ProductsSerializers(product, context={'request': request}).data})
 
     @permission_classes([AllowAny, ])
     def post(self, request):
@@ -162,7 +162,7 @@ class ProductsView(APIView):
         files = request.data.get('files')
         if 'files' in data:
             del data['files']
-        products_serializer = ProductsSerializers(data=data)
+        products_serializer = ProductsSerializers(data=data, context={'request': request})
         if products_serializer.is_valid(raise_exception=True):
             products_serializer.save()
 
@@ -182,7 +182,7 @@ class ProductsView(APIView):
         pk = request.query_params.get('pk')
         product = get_object_or_404(Product.objects.all(), pk=pk)
         data = request.data.get('data')
-        serializer = ProductsSerializers(instance=product, data=data, partial=True)
+        serializer = ProductsSerializers(instance=product, data=data, partial=True, context={'request': request})
         if serializer.is_valid(raise_exception=True):
             serializer.save()
         return Response({"data": serializer.data})

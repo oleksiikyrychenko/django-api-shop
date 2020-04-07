@@ -87,11 +87,12 @@ class ProductsSerializers(serializers.ModelSerializer):
     category = CategorySerializers(read_only=True)
     category_id = serializers.IntegerField(write_only=True)
     product_images = ProductsImagesSerializers(many=True, read_only=True)
+    added_to_favorites = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Product
         fields = (
-        'id', 'title', 'price', 'description', 'owner', 'owner_id', 'category', 'category_id', 'product_images')
+            'id', 'title', 'price', 'description', 'owner', 'owner_id', 'category', 'category_id', 'product_images', 'added_to_favorites')
 
     def create(self, validated_data):
         return Product.objects.create(**validated_data)
@@ -103,6 +104,16 @@ class ProductsSerializers(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+    def get_added_to_favorites(self, obj):
+        user_id = self.context['request'].user.id
+        qq=self.context
+        dd=1
+        favorites = FavoritesProducts.objects.filter(product_id=obj.id, user_id=user_id)
+        if favorites.count() is not 0:
+            return True
+
+        return False
 
 
 class FavoritesProductsSerializers(serializers.ModelSerializer):
