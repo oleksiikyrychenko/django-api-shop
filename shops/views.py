@@ -6,6 +6,8 @@ from rest_framework.views import APIView
 from shops.models import Shop, Category, Product, ProductsImages, FavoritesProducts
 from shops.serializers import ShopSerializers, CategorySerializers, ProductsSerializers, ProductsImagesSerializers, FavoritesProductsSerializers
 from django.shortcuts import get_object_or_404
+from rest_framework import filters
+from rest_framework import generics
 
 
 class ShopView(APIView):
@@ -193,6 +195,13 @@ class ProductsView(APIView):
         product = get_object_or_404(Product.objects.all(), pk=pk)
         product.delete()
         return Response({"message": "Product has been deleted."})
+
+
+class ProductSearchAPIView(generics.ListCreateAPIView):
+    search_fields = ['title']
+    filter_backends = (filters.SearchFilter,)
+    queryset = Product.objects.all()
+    serializer_class = ProductsSerializers
 
 
 class ProductImagesView(APIView):
