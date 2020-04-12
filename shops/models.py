@@ -51,7 +51,6 @@ class Product(models.Model):
 
 
 class ProductsImages(models.Model):
-
     class Meta:
         db_table = 'products_images'
 
@@ -66,7 +65,6 @@ class ProductsImages(models.Model):
 
 
 class FavoritesProducts(models.Model):
-
     class Meta:
         db_table = 'favorites_products'
 
@@ -76,4 +74,4 @@ class FavoritesProducts(models.Model):
     product = models.ForeignKey('shops.Product', related_name='favorite_product', on_delete=models.CASCADE)
 
     def __str__(self):
-        return '1'
+        return self.pk

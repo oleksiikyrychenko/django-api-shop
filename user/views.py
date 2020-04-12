@@ -16,6 +16,7 @@ from django.contrib.auth import authenticate
 
 
 class UserView(APIView):
+    # TODO: return current user
     @permission_classes([IsAuthenticated, ])
     def get(self, request):
         users = Profile.objects.all()
@@ -54,7 +55,8 @@ class UserView(APIView):
 
 
 class LoginView(APIView):
-    @permission_classes([AllowAny, ])
+    permission_classes = [AllowAny]
+
     def post(self, request):
         if 'email' in request.data and 'password' in request.data:
             user = get_object_or_404(Profile.objects.all(), email=request.data['email'])

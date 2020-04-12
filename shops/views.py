@@ -1,23 +1,24 @@
 from django.forms import model_to_dict
-from rest_framework.decorators import permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from shops.models import Shop, Category, Product, ProductsImages, FavoritesProducts
-from shops.serializers import ShopSerializers, CategorySerializers, ProductsSerializers, ProductsImagesSerializers, FavoritesProductsSerializers
+from shops.serializers import ShopSerializers, CategorySerializers, ProductsSerializers, ProductsImagesSerializers, \
+    FavoritesProductsSerializers
 from django.shortcuts import get_object_or_404
 from rest_framework import filters
 from rest_framework import generics
+from django.db.models import F
 
 
 class ShopView(APIView):
-    @permission_classes([IsAuthenticated, ])
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         shops = Shop.objects.all()
         serializer = ShopSerializers(shops, many=True)
         return Response({"data": serializer.data})
 
-    @permission_classes([IsAuthenticated, ])
     def post(self, request):
         data = request.data.get('data')
         serializer = ShopSerializers(data=data)
@@ -26,7 +27,6 @@ class ShopView(APIView):
             serializer.save()
         return Response({"data": serializer.data})
 
-    @permission_classes([IsAuthenticated, ])
     def put(self, request):
         pk = request.query_params.get('pk')
         shop = get_object_or_404(Shop.objects.all(), pk=pk)
@@ -36,7 +36,6 @@ class ShopView(APIView):
             serializer.save()
         return Response({"data": serializer.data})
 
-    @permission_classes([IsAuthenticated, ])
     def delete(self, request):
         pk = request.query_params.get('pk')
         shop = get_object_or_404(Shop.objects.all(), pk=pk)
@@ -45,7 +44,8 @@ class ShopView(APIView):
 
 
 class CategoryView(APIView):
-    @permission_classes([AllowAny, ])
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         pk = request.query_params.get('pk')
         categories = Category.objects.all()
@@ -55,11 +55,10 @@ class CategoryView(APIView):
             serializer = CategorySerializers(children_categories, many=True)
             return Response({"data": serializer.data})
 
-        root_categories = Category.objects.all().filter(depth=0)
+        root_categories = categories.filter(depth=0)
         serializer = CategorySerializers(root_categories, many=True)
         return Response({"data": serializer.data})
 
-    @permission_classes([AllowAny, ])
     def post(self, request):
         title = request.data.get('title')
         parent_category_id = request.data.get('parent_category_id')
@@ -86,19 +85,14 @@ class CategoryView(APIView):
             return self.save_data(data)
 
         parent_category = get_object_or_404(all_categories, pk=parent_category_id)
-        categories_other_branch = all_categories.filter(left_key__gt=parent_category.right_key)
+        # Update categories in other branches
+        all_categories.filter(left_key__gt=parent_category.right_key) \
+            .update(right_key=F('right_key') + 2, left_key=F('left_key') + 2)
 
-        for category in categories_other_branch:
-            category.right_key = category.right_key + 2
-            category.left_key = category.left_key + 2
-            category.save()
-
-        categories_parent_branch = all_categories.filter(right_key__gte=parent_category.right_key,
-                                                         left_key__lt=parent_category.right_key)
-
-        for category in categories_parent_branch:
-            category.right_key = category.right_key + 2
-            category.save()
+        # Update categories in parent branch
+        all_categories.filter(right_key__gte=parent_category.right_key,
+                              left_key__lt=parent_category.right_key) \
+            .update(right_key=F('right_key') + 2)
 
         data = {
             'left_key': parent_category.right_key,
@@ -109,7 +103,6 @@ class CategoryView(APIView):
 
         return self.save_data(data)
 
-    @permission_classes([AllowAny, ])
     def put(self, request):
         pk = request.query_params.get('pk')
         title = request.data.get('title')
@@ -119,24 +112,22 @@ class CategoryView(APIView):
 
         return Response({'data': model_to_dict(category)})
 
-    @permission_classes([AllowAny, ])
     def delete(self, request):
         pk = request.query_params.get('pk')
-        category = get_object_or_404(Category.objects.all(), pk=pk)
-        category_for_delete = Category.objects.filter(left_key__gte=category.left_key,
-                                                      right_key__lte=category.right_key)
-        for category in category_for_delete:
-            category.delete()
+        current_category = get_object_or_404(Category.objects.all(), pk=pk)
+        # Delete current category and it children
+        Category.objects.filter(left_key__gte=current_category.left_key,
+                                right_key__lte=current_category.right_key).delete()
 
-        parent_category = Category.objects.filter(right_key__gt=category.right_key, left_key__lt=category.left_key)
-        for category in parent_category:
-            category.right_key = category.right_key - (category.right_key - category.left_key + 1)
-            category.save()
+        # Update parent branch
+        Category.objects.filter(right_key__gt=current_category.right_key,
+                                left_key__lt=current_category.left_key) \
+            .update(right_key=F('right_key') - (current_category.right_key - current_category.left_key + 1))
 
-        rest_categories = Category.objects.filter(left_key__gt=category.right_key)
-        for category in rest_categories:
-            category.left_key = category.left_key - (category.right_key - category.left_key + 1)
-            category.save()
+        # Updates rest categories
+        Category.objects.filter(left_key__gt=current_category.right_key) \
+            .update(left_key=F('left_key') - (current_category.right_key - current_category.left_key + 1),
+                    right_key=F('right_key') - (current_category.right_key - current_category.left_key + 1))
 
         return Response({"data": "delete"})
 
@@ -148,17 +139,18 @@ class CategoryView(APIView):
 
 
 class ProductsView(APIView):
-    @permission_classes([IsAuthenticated, ])
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         pk = request.query_params.get('pk')
-        if not pk:
-            serializer = ProductsSerializers(Product.objects.all(), many=True, context={'request': request})
-            return Response({"data": serializer.data})
+        products = Product.objects.all()
+        if pk:
+            product = get_object_or_404(products, pk=pk)
+            return Response({"data": ProductsSerializers(product, context={'request': request}).data})
 
-        product = get_object_or_404(Product.objects.all(), pk=pk)
-        return Response({"data": ProductsSerializers(product, context={'request': request}).data})
+        serializer = ProductsSerializers(products, many=True, context={'request': request})
+        return Response({"data": serializer.data})
 
-    @permission_classes([AllowAny, ])
     def post(self, request):
         data = request.data
         files = request.data.get('files')
@@ -179,7 +171,6 @@ class ProductsView(APIView):
 
         return Response({"data": products_serializer.data})
 
-    @permission_classes([IsAuthenticated, ])
     def put(self, request):
         pk = request.query_params.get('pk')
         product = get_object_or_404(Product.objects.all(), pk=pk)
@@ -189,7 +180,6 @@ class ProductsView(APIView):
             serializer.save()
         return Response({"data": serializer.data})
 
-    @permission_classes([IsAuthenticated, ])
     def delete(self, request):
         pk = request.query_params.get('pk')
         product = get_object_or_404(Product.objects.all(), pk=pk)
@@ -198,6 +188,7 @@ class ProductsView(APIView):
 
 
 class ProductSearchAPIView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
     search_fields = ['title']
     filter_backends = (filters.SearchFilter,)
     queryset = Product.objects.all()
@@ -205,7 +196,8 @@ class ProductSearchAPIView(generics.ListCreateAPIView):
 
 
 class ProductImagesView(APIView):
-    @permission_classes([AllowAny, ])
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         images = ProductsImages.objects.all()
         serializer = ProductsImagesSerializers(images, many=True)
@@ -213,14 +205,14 @@ class ProductImagesView(APIView):
 
 
 class FavoritesProductsView(APIView):
-    @permission_classes([AllowAny, ])
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         pk = request.query_params.get('user_id')
-        favorite_product = FavoritesProducts.objects.all().filter(user_id=pk)
+        favorite_product = FavoritesProducts.objects.filter(user_id=pk)
         serializer = FavoritesProductsSerializers(favorite_product, many=True)
         return Response({"data": serializer.data})
 
-    @permission_classes([AllowAny, ])
     def post(self, request):
         user_id = request.data.get('user_id')
         product_id = request.data.get('product_id')
@@ -229,12 +221,11 @@ class FavoritesProductsView(APIView):
             'product_id': product_id
         }
         serializer = FavoritesProductsSerializers(data=data)
-
         if serializer.is_valid(raise_exception=True):
             serializer.save()
+
         return Response({"data": serializer.data})
 
-    @permission_classes([AllowAny, ])
     def delete(self, request):
         pk = request.query_params.get('pk')
         favorite_product = get_object_or_404(FavoritesProducts.objects.all(), pk=pk)

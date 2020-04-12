@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Profile, Role
+from user.models import Profile, Role
 
 
 class UserSerializers(serializers.ModelSerializer):

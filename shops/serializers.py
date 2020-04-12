@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Shop, Category, Product, ProductsImages, FavoritesProducts
+from shops.models import Shop, Category, Product, ProductsImages, FavoritesProducts
 from user.serializers import UserSerializers
 from drf_extra_fields.fields import Base64ImageField
 
@@ -50,9 +50,9 @@ class CategorySerializers(serializers.ModelSerializer):
 
 
 class ProductsImagesSerializers(serializers.ModelSerializer):
-    size = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    mime_type = serializers.SerializerMethodField()
+    size = serializers.SerializerMethodField(read_only=True)
+    name = serializers.SerializerMethodField(read_only=True)
+    mime_type = serializers.SerializerMethodField(read_only=True)
     image = Base64ImageField()
 
     class Meta:
@@ -77,8 +77,10 @@ class ProductsImagesSerializers(serializers.ModelSerializer):
         return file_name
 
     def get_mime_type(self, obj):
-        filename = obj.image.name
-        return filename.split('.')[-1]
+        mime_type = ''
+        if obj.image and hasattr(obj.image, 'name'):
+            mime_type = obj.image.name.split('.')[-1]
+        return mime_type
 
 
 class ProductsSerializers(serializers.ModelSerializer):
@@ -92,7 +94,17 @@ class ProductsSerializers(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = (
-            'id', 'title', 'price', 'description', 'owner', 'owner_id', 'category', 'category_id', 'product_images', 'added_to_favorites')
+            'id',
+            'title',
+            'price',
+            'description',
+            'owner',
+            'owner_id',
+            'category',
+            'category_id',
+            'product_images',
+            'added_to_favorites'
+        )
 
     def create(self, validated_data):
         return Product.objects.create(**validated_data)
@@ -106,12 +118,11 @@ class ProductsSerializers(serializers.ModelSerializer):
         return instance
 
     def get_added_to_favorites(self, obj):
-        user_id = self.context['request'].user.id
-        qq=self.context
-        dd=1
-        favorites = FavoritesProducts.objects.filter(product_id=obj.id, user_id=user_id)
-        if favorites.count() is not 0:
-            return True
+        if 'request' in self.context:
+            user_id = self.context['request'].user.id
+            favorites = FavoritesProducts.objects.filter(product_id=obj.id, user_id=user_id)
+            if favorites.count() is not 0:
+                return True
 
         return False
 
