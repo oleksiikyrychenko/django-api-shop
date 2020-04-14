@@ -16,12 +16,14 @@ from django.contrib.auth import authenticate
 
 
 class UserView(APIView):
-    # TODO: return current user
     @permission_classes([IsAuthenticated, ])
     def get(self, request):
-        users = Profile.objects.all()
-        serializer = UserSerializers(users, many=True)
-        return Response({"users": serializer.data})
+        pk = request.query_params.get('pk')
+        if pk == 'me':
+            users = request.user
+            return Response({"user": model_to_dict(users)})
+
+        return Response({"users": {}})
 
     @permission_classes([AllowAny, ])
     def post(self, request):
