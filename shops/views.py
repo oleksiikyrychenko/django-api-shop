@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import filters
 from rest_framework import generics
 from django.db.models import F
+from rest_framework import status
 
 
 class ShopView(APIView):
@@ -17,7 +18,7 @@ class ShopView(APIView):
     def get(self, request):
         shops = Shop.objects.all()
         serializer = ShopSerializers(shops, many=True)
-        return Response({"data": serializer.data})
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
         data = request.data.get('data')
@@ -25,7 +26,7 @@ class ShopView(APIView):
 
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-        return Response({"data": serializer.data})
+        return Response({"data": serializer.data}, status=status.HTTP_201_CREATED)
 
     def put(self, request):
         pk = request.query_params.get('pk')
@@ -34,13 +35,13 @@ class ShopView(APIView):
         serializer = ShopSerializers(instance=shop, data=data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-        return Response({"data": serializer.data})
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def delete(self, request):
         pk = request.query_params.get('pk')
         shop = get_object_or_404(Shop.objects.all(), pk=pk)
         shop.delete()
-        return Response({"message": "Shop has been deleted."})
+        return Response({"message": "Shop has been deleted."}, status=status.HTTP_200_OK)
 
 
 class CategoryView(APIView):
@@ -53,11 +54,11 @@ class CategoryView(APIView):
             category = get_object_or_404(Category.objects.all(), pk=pk)
             children_categories = categories.filter(left_key__gt=category.left_key, right_key__lt=category.right_key)
             serializer = CategorySerializers(children_categories, many=True)
-            return Response({"data": serializer.data})
+            return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
         root_categories = categories.filter(depth=0)
         serializer = CategorySerializers(root_categories, many=True)
-        return Response({"data": serializer.data})
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
         title = request.data.get('title')
@@ -110,7 +111,7 @@ class CategoryView(APIView):
         category.title = title
         category.save()
 
-        return Response({'data': model_to_dict(category)})
+        return Response({'data': model_to_dict(category)}, status=status.HTTP_200_OK)
 
     def delete(self, request):
         pk = request.query_params.get('pk')
@@ -129,13 +130,13 @@ class CategoryView(APIView):
             .update(left_key=F('left_key') - (current_category.right_key - current_category.left_key + 1),
                     right_key=F('right_key') - (current_category.right_key - current_category.left_key + 1))
 
-        return Response({"data": "delete"})
+        return Response({"data": "delete"}, status=status.HTTP_200_OK)
 
     def save_data(self, data):
         serializer = CategorySerializers(data=data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-            return Response({"data": serializer.data})
+            return Response({"data": serializer.data}, status=status.HTTP_201_CREATED)
 
 
 class ProductsView(APIView):
@@ -146,10 +147,10 @@ class ProductsView(APIView):
         products = Product.objects.all()
         if pk:
             product = get_object_or_404(products, pk=pk)
-            return Response({"data": ProductsSerializers(product, context={'request': request}).data})
+            return Response({"data": ProductsSerializers(product, context={'request': request}).data}, status=status.HTTP_200_OK)
 
         serializer = ProductsSerializers(products, many=True, context={'request': request})
-        return Response({"data": serializer.data})
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
         data = request.data
@@ -169,7 +170,7 @@ class ProductsView(APIView):
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
 
-        return Response({"data": products_serializer.data})
+        return Response({"data": products_serializer.data}, status=status.HTTP_200_OK)
 
     def put(self, request):
         pk = request.query_params.get('pk')
@@ -178,13 +179,13 @@ class ProductsView(APIView):
         serializer = ProductsSerializers(instance=product, data=data, partial=True, context={'request': request})
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-        return Response({"data": serializer.data})
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def delete(self, request):
         pk = request.query_params.get('pk')
         product = get_object_or_404(Product.objects.all(), pk=pk)
         product.delete()
-        return Response({"message": "Product has been deleted."})
+        return Response({"message": "Product has been deleted."}, status=status.HTTP_200_OK)
 
 
 class ProductSearchAPIView(generics.ListCreateAPIView):
@@ -201,7 +202,7 @@ class ProductImagesView(APIView):
     def get(self, request):
         images = ProductsImages.objects.all()
         serializer = ProductsImagesSerializers(images, many=True)
-        return Response({"data": serializer.data})
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 
 class FavoritesProductsView(APIView):
@@ -211,7 +212,7 @@ class FavoritesProductsView(APIView):
         pk = request.query_params.get('user_id')
         favorite_product = FavoritesProducts.objects.filter(user_id=pk)
         serializer = FavoritesProductsSerializers(favorite_product, many=True)
-        return Response({"data": serializer.data})
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
         user_id = request.data.get('user_id')
@@ -224,10 +225,10 @@ class FavoritesProductsView(APIView):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
 
-        return Response({"data": serializer.data})
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def delete(self, request):
         pk = request.query_params.get('pk')
         favorite_product = get_object_or_404(FavoritesProducts.objects.all(), pk=pk)
         favorite_product.delete()
-        return Response({"message": "Product was successful deleted from favorites"})
+        return Response({"message": "Product was successful deleted from favorites"}, status=status.HTTP_200_OK)

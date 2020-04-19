@@ -22,9 +22,9 @@ class UserView(APIView):
         pk = request.query_params.get('pk')
         if pk == 'me':
             users = request.user
-            return Response({"user": model_to_dict(users)})
+            return Response({"user": model_to_dict(users)}, status=status.HTTP_200_OK)
 
-        return Response({"users": {}})
+        return Response({"user": {}}, status=status.HTTP_200_OK)
 
     @permission_classes([AllowAny, ])
     def post(self, request):
@@ -35,7 +35,7 @@ class UserView(APIView):
         serializer = UserSerializers(data=user, context={'url': url})
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-        return Response({"user": serializer.data})
+        return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
 
     @permission_classes([IsAuthenticated, ])
     def put(self, request):
@@ -45,14 +45,14 @@ class UserView(APIView):
         serializer = UserSerializers(instance=user, data=data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-        return Response({"user": serializer.data})
+        return Response({"user": serializer.data}, status=status.HTTP_200_OK)
 
     @permission_classes([IsAuthenticated, ])
     def delete(self, request):
         pk = request.query_params.get('pk')
         user = get_object_or_404(Profile.objects.all(), pk=pk)
         user.delete()
-        return Response({"message": "User has been deleted."})
+        return Response({"message": "User has been deleted."}, status=status.HTTP_200_OK)
 
 
 class LoginView(APIView):
@@ -127,7 +127,6 @@ class PasswordRecoveryView(APIView):
             return Response('Password recovered', status=status.HTTP_200_OK)
 
         return Response('Email is required field', status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class RoleView(viewsets.ModelViewSet):
