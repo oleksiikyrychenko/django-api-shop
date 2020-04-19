@@ -106,7 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
 JWT_AUTH = {
     'JWT_VERIFY': True,
     'JWT_VERIFY_EXPIRATION': True,
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3000),
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=364),
     'JWT_AUTH_HEADER_PREFIX': 'Bearer',
 
 }
@@ -138,5 +138,11 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
+AWS_STORAGE_BUCKET_NAME = 's3-django-shop-bucket'
+AWS_S3_REGION_NAME = 'eu-west-2'
+AWS_ACCESS_KEY_ID = 'AKIATXB6JFVHWFT2DK46'
+AWS_SECRET_ACCESS_KEY = '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'
 AWS_DEFAULT_ACL = False
+
+SENDGRID_API_KEY = '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'
+SEND_FROM_MAIL = 'hatowi6318@lagsixtome.com'
