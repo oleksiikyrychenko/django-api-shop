@@ -1,7 +1,6 @@
 *.pyc
 *.db
 *~
-.*
 
 .idea
 /site/
@@ -11,6 +10,7 @@
 /dist/
 /*.egg-info/
 /env/
+.env
 /venv/
 MANIFEST
 coverage.*
