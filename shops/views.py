@@ -16,15 +16,16 @@ from shops.pagination import PaginationHandlerMixin
 
 class ShopView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = ShopSerializers
 
     def get(self, request):
         shops = Shop.objects.all()
-        serializer = ShopSerializers(shops, many=True)
+        serializer = self.serializer_class(shops, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
         data = request.data.get('data')
-        serializer = ShopSerializers(data=data)
+        serializer = self.serializer_class(data=data)
 
         if serializer.is_valid(raise_exception=True):
             serializer.save()
@@ -34,7 +35,7 @@ class ShopView(APIView):
         pk = request.query_params.get('pk')
         shop = get_object_or_404(Shop.objects.all(), pk=pk)
         data = request.data.get('data')
-        serializer = ShopSerializers(instance=shop, data=data, partial=True)
+        serializer = self.serializer_class(instance=shop, data=data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
@@ -48,6 +49,7 @@ class ShopView(APIView):
 
 class CategoryView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = CategorySerializers
 
     def get(self, request):
         pk = request.query_params.get('pk')
@@ -55,11 +57,11 @@ class CategoryView(APIView):
         if pk:
             category = get_object_or_404(Category.objects.all(), pk=pk)
             children_categories = categories.filter(left_key__gt=category.left_key, right_key__lt=category.right_key)
-            serializer = CategorySerializers(children_categories, many=True)
+            serializer = self.serializer_class(children_categories, many=True)
             return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
         root_categories = categories.filter(depth=0)
-        serializer = CategorySerializers(root_categories, many=True)
+        serializer = self.serializer_class(root_categories, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -135,7 +137,7 @@ class CategoryView(APIView):
         return Response({"data": "delete"}, status=status.HTTP_200_OK)
 
     def save_data(self, data):
-        serializer = CategorySerializers(data=data)
+        serializer = self.serializer_class(data=data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response({"data": serializer.data}, status=status.HTTP_201_CREATED)
@@ -212,20 +214,22 @@ class ProductSearchAPIView(generics.ListCreateAPIView):
 
 class ProductImagesView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = ProductsImagesSerializers
 
     def get(self, request):
         images = ProductsImages.objects.all()
-        serializer = ProductsImagesSerializers(images, many=True)
+        serializer = self.serializer_class(images, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
 
 class FavoritesProductsView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = FavoritesProductsSerializers
 
     def get(self, request):
         pk = request.query_params.get('user_id')
         favorite_product = FavoritesProducts.objects.filter(user_id=pk)
-        serializer = FavoritesProductsSerializers(favorite_product, many=True)
+        serializer = self.serializer_class(favorite_product, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -235,7 +239,7 @@ class FavoritesProductsView(APIView):
             'user_id': user_id,
             'product_id': product_id
         }
-        serializer = FavoritesProductsSerializers(data=data)
+        serializer = self.serializer_class(data=data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
 

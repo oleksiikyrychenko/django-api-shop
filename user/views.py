@@ -17,6 +17,8 @@ from datetime import datetime
 
 
 class UserView(APIView):
+    serializer_class = UserSerializers
+
     @permission_classes([IsAuthenticated, ])
     def get(self, request):
         pk = request.query_params.get('pk')
@@ -32,7 +34,7 @@ class UserView(APIView):
         role = get_object_or_404(Role.objects.all(), role_name=user['role'])
         user['role_id'] = role.pk
         url = request.build_absolute_uri('verify/?token=')
-        serializer = UserSerializers(data=user, context={'url': url})
+        serializer = self.serializer_class(data=user, context={'url': url})
         if serializer.is_valid(raise_exception=True):
             serializer.save()
         return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
@@ -42,7 +44,7 @@ class UserView(APIView):
         pk = request.query_params.get('pk')
         user = get_object_or_404(Profile.objects.all(), pk=pk)
         data = request.data.get('user')
-        serializer = UserSerializers(instance=user, data=data, partial=True)
+        serializer = self.serializer_class(instance=user, data=data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
         return Response({"user": serializer.data}, status=status.HTTP_200_OK)
