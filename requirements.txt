@@ -19,7 +19,7 @@ mysqlclient==1.4.6
 Pillow==7.0.0
 pkg-resources==0.0.0
 pycparser==2.20
-PyJWT==1.7.1
+PyJWT==2.4.0
 python-dateutil==2.8.1
 python-dotenv==0.13.0
 python-http-client==3.2.7
